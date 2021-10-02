@@ -8,6 +8,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/LaserScan.h>
 #include <Eigen/Dense>
+#include <particle.hpp>
 
 class ParticleFilter
 {
@@ -17,11 +18,15 @@ class ParticleFilter
 
         ~ParticleFilter();
 
-        void odomCallback();
+        void odomCallback(const nav_msgs::Odometry msg);
 
         void scanCallback();
 
+        void drawParticles(std::vector<Particle> particles);
+
     private:
+        std::vector<Particle> particles_;
+        double numberOfParticles;
 
 };
 

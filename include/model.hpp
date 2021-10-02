@@ -12,11 +12,12 @@ class Model
 
         ~Model();
 
-        Eigen::vecotr2d motionModel(double u, double xPrev);
+        Eigen::vector3d motionModel(double u, Eigen::vector3d xPrev);
 
         double measurementModel();
 
     private:
+        double alpha1_, alpha2_, alpha3_, alpha4_;
 
 };
 
