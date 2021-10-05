@@ -1,17 +1,29 @@
 #include <particleFilter.hpp>
 
-ParticleFilter::ParticleFilter(double n): noOfParticles_(n){
+ParticleFilter::ParticleFilter(ros::NodeHandle &nh, int n): filter_(nh), noOfParticles_(n){
 
-	odomSub_ = ;
-	scanSub_ = ;
-	particlePub_ = ;
+	odomSub_ = filter_.subscribe("/odom", 1, &ParticleFilter::odomCallback, this);
+	scanSub_ = filter_.subscribe("/scan", 1, &ParticleFilter::scanCallback, this);
+	mapSub_ = filter_.subscribe("/map", 1, &ParticleFilter::mapCallback, this);
+	particlePub_ = filter_.advertise<geometry_msgs::PoseArray>("/particles", 1);
 	
 	// Create the motion and measurement models
-	Model model();
-	
+	Model model(alpha1_, alpha2_, alpha3_, alpha4_);
+
+	getMapData();
+
 	// Create Particles
 	particlePoses_.resize(noOfParticles_);
 	while(n!=noOfParticles_){
+		double x = (rand()/RAND_MAX)*(mapWidthX) + mapMinX;
+		double y = (rand()/RAND_MAX)*(mapWidthY) + mapMinY;
+		double yaw = (rand()/RAND_MAX)*(2*pi_);
+		fromPiToMinusPi(yaw);
+		if()// TODO check if point valid
+			continue;
+		Particle p;
+		p.pose << x, y, yaw;
+		particles_.push_back(p);
 	}
 	
 	// Draw initial Particles
@@ -30,6 +42,17 @@ void ParticleFilter::odomCallback(const nav_msgs::Odometry msg){
 
 void ParticleFilter::scanCallback(const sensor_msgs::LaserScan msg){
 	scanData_ = msg;
+}
+
+void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
+
+}
+
+void ParticleFilter::fromPiToMinusPi(double &angle){
+	if(angle > pi_)
+		angle += -2*pi_ ;
+	else if(angle < -pi_)
+		angle += 2*pi_;
 }
 
 void ParticleFilter::normalize(double totalWeight){

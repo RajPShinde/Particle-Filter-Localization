@@ -10,12 +10,14 @@
 #include <Eigen/Dense>
 #include <particle.hpp>
 #include <tf/transform_datatypes.h>
+#include <geometry_msgs/PoseArray.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 class ParticleFilter
 {
     public:
 
-        ParticleFilter();
+        ParticleFilter(ros::NodeHandle &nh, int n);
 
         ~ParticleFilter();
 
@@ -28,8 +30,10 @@ class ParticleFilter
         void localize();
 
     private:
+        ros::NodeHandle filter_;
         ros::Subscriber odomSub_;
         ros::Subscriber scanSub_;
+        ros::Subscriber mapSub_;
         ros::Publisher particlePub_;
 
         std::vector<Particle> particles_;
@@ -37,9 +41,12 @@ class ParticleFilter
         nav_msgs::Odometry odomData_;
         sensor_msgs::LaserScan scanData_;
         geometry_msgs::PoseArray particlePoses_;
+        double pi_ = 3.14159;
         double totalWeight_ = 0;
-
-
+        double alpha1_ = 0.03;
+        double alpha2_ = 0.03;
+        double alpha3_ = 0.4;
+        double alpha4_ = 0.4;
 };
 
 #endif  //  INCLUDE_PARTICLEFILTER_HPP_
