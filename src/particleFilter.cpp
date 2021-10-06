@@ -17,10 +17,14 @@ void ParticleFilter::initializeParticles(){
 	while(n!=noOfParticles_){
 		double x = (rand()/(double)RAND_MAX)*(map_.xWidth*map_.resolution) + map_.xMin*map_.resolution;
 		double y = (rand()/(double)RAND_MAX)*(map_.yWidth*map_.resolution) + map_.yMin*map_.resolution;
+		// double x = (rand()/(double)RAND_MAX)*map_.xWidth + map_.xMin;
+		// double y = (rand()/(double)RAND_MAX)*map_.yWidth + map_.yMin;
 		double yaw = (rand()/(double)RAND_MAX)*(2*pi_);
 		fromPiToMinusPi(yaw);
-		if()
+		if(map_.data[std::round(x)/map_.resolution][std::round(y)/map_.resolution]<=0)
 			continue;
+		// if(map_.data[x][y]<=0)
+		// 	continue;
 		Particle p;
 		p.pose << x, y, yaw;
 		particles_.push_back(p);
@@ -138,8 +142,9 @@ void ParticleFilter::localize(){
 
 			particles_ = tempParticles;
 
-			for(Particle p:particles_){
+			for(Particle &p:particles_){
 				weight = model.measurementModel(p, scan_, map_);
+				p.weight = weight;
 				totalWeight_ += weight;
 			}
 

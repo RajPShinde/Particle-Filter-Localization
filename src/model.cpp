@@ -32,9 +32,12 @@ Eigen::vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::ve
 	return x;
 }
 
-double Model::measurementModel(){
+double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map){
 
 	double weight = 0;
+	lidarX = p.pose(0) + lidarOffsetX*cos(pose(2));
+	lidarY = p.pose(1) + lidarOffsetY*sin(pose(2));
+	lidarTheta = pose(2);
 	for(int i = 0; i<noOfBeams; i++){
 
 
