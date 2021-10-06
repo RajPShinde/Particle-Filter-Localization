@@ -44,5 +44,26 @@ double Model::measurementModel(){
 }
 
 void Model::sampleNormalDistribution(double sigma){
-	return noise;
+	// Box-Muller Transform
+	double x1, x2, w, r;
+	do{
+
+		// Generate a uniform distribution [0, 1]
+		// Scale the Uniform distribution by 2 and left shift by 1 i.e Uniform Distribution [-1,1]
+		do{
+			// Generate a random number between [0,1]
+			r = rand48();
+		}while(r==0);
+		// Project the number in distribution [-1, 1]
+		x1 = 2*r -1;
+		do{
+			// Generate a random number between [0,1]
+			r = rand48();
+		}while(r==0)
+		// Project the number in distribution [-1, 1]
+		x2 = 2*r -1;
+		w = x1*x1 + x2*x2;
+	}while(w>1 || w==0);
+
+	return sigma * x2 * std::sqrt(-2.0*std::log(w)/w);
 }

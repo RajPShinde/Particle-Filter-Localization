@@ -8,18 +8,18 @@ ParticleFilter::ParticleFilter(ros::NodeHandle &nh, int n): filter_(nh), noOfPar
 	particlePub_ = filter_.advertise<geometry_msgs::PoseArray>("/particles", 1);
 	
 	// Create the motion and measurement models
-	Model model(alpha1_, alpha2_, alpha3_, alpha4_);
+	Model model(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
+}
 
-	getMapData();
-
+void ParticleFilter::initializeParticles(){
 	// Create Particles
 	particlePoses_.resize(noOfParticles_);
 	while(n!=noOfParticles_){
-		double x = (rand()/RAND_MAX)*(mapWidthX) + mapMinX;
-		double y = (rand()/RAND_MAX)*(mapWidthY) + mapMinY;
-		double yaw = (rand()/RAND_MAX)*(2*pi_);
+		double x = (rand()/(double)RAND_MAX)*(map_.xWidth*map_.resolution) + map_.xMin*map_.resolution;
+		double y = (rand()/(double)RAND_MAX)*(map_.yWidth*map_.resolution) + map_.yMin*map_.resolution;
+		double yaw = (rand()/(double)RAND_MAX)*(2*pi_);
 		fromPiToMinusPi(yaw);
-		if()// TODO check if point valid
+		if()
 			continue;
 		Particle p;
 		p.pose << x, y, yaw;
@@ -28,9 +28,8 @@ ParticleFilter::ParticleFilter(ros::NodeHandle &nh, int n): filter_(nh), noOfPar
 	
 	// Draw initial Particles
 	drawParticles();
-	
-	// Run Algorithm
-	localize();
+
+	initialized_ = true;
 }
 
 ParticleFilter::~ParticleFilter(){
@@ -45,7 +44,23 @@ void ParticleFilter::scanCallback(const sensor_msgs::LaserScan msg){
 }
 
 void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
-
+	map_.resolution = msg.info.resolution
+	map_.xWidth = msg.info.width;
+	map_.yWidth = msg.info.height;
+	map_.xMin = 0
+	map_.yMin = 0
+	map_.xMax = map_.xWidth;
+	map_.yMax = map_.yWidth;
+	int i = 0;
+	for(int y=0; y<map_.yMax; y++){
+		std::vector<int> row;
+		for(int x=0; x<map_.xMax; x++){
+			row.push_back(msg.data[i])
+			i++;
+		}
+		map_.data.push_back(row);
+	}
+	initializeParticles();
 }
 
 void ParticleFilter::fromPiToMinusPi(double &angle){
@@ -82,6 +97,8 @@ void ParticleFilter::drawParticles(){
 }
 
 void ParticleFilter::localize(){
+	while(!initialized_){
+	}
 
 	while(true){
 
@@ -121,16 +138,24 @@ void ParticleFilter::localize(){
 
 			particles_ = tempParticles;
 
+			for(Particle p:particles_){
+				weight = model.measurementModel(p, scan_, map_);
+				totalWeight_ += weight;
+			}
 
+			normalize();
+
+			drawParticles();
+
+			resample();
 		}
-
-		for(Particle p:particles_){
-			weight = model.measurementModel();
-			totalWeight_ += weight;
-		}
-
-		normalize();
-
-		drawParticles();
 	}
+}
+
+void ParticleFilter::resample(){
+
+	for(int i=0; i<noOfParticles_; i++){
+
+	}
+
 }
