@@ -26,7 +26,15 @@ class ParticleFilter
 
         void scanCallback(const sensor_msgs::LaserScan msg);
 
+        void mapCallback(const nav_msgs::OccupancyGrid msg);
+
         void drawParticles();
+
+        void fromPiToMinusPi(double yaw);
+
+        void normalize(double totalWeight);
+
+        void resample();
 
         void localize();
 
@@ -44,7 +52,6 @@ class ParticleFilter
         geometry_msgs::PoseArray particlePoses_;
         bool initialized_ = false;
         double pi_ = 3.14159;
-        double totalWeight_ = 0;
         double alpha1_ = 0.03;
         double alpha2_ = 0.03;
         double alpha3_ = 0.4;

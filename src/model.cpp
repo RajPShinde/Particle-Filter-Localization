@@ -35,18 +35,34 @@ Eigen::vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::ve
 double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map){
 
 	double weight = 0;
-	lidarX = p.pose(0) + lidarOffsetX*cos(pose(2));
-	lidarY = p.pose(1) + lidarOffsetY*sin(pose(2));
-	lidarTheta = pose(2);
-	for(int i = 0; i<noOfBeams; i++){
+	sensorX = p.pose(0) + sensorOffsetX*cos(pose(2));
+	sensorY = p.pose(1) + sensorOffsetY*sin(pose(2));
+	sensorTheta = pose(2);
 
+	if(map[round(p.pose(0))/map.resolution][round(p.pose(1))/map.resolution]<=0 || map[round(sensorX)/map.resolution][round(sensorY)/map.resolution]<=0)
+		return 0;
 
-		weight += ;
+	for(int i = 0; i<720; i++){
+		zkt = scan.ranges[i];
+
+		if(zkt>sensorMaxRange_ || zkt<sensorRangeMin_)
+			continue
+
+		double zktStep = sensorTheta - pi_ + i*sensorStep_;
+
+		double zktX = sensorX + zkt*std::cos(zktStep);
+		double zktY = sensorY + zkt*std::sin(zktStep);
+
+		if(zktX<map.minX*map.resolution || zktX>map.maxX*map.resolution || zktY<map.minY*map.resolution || zktY>map.maxY*map.resolution)
+			continue;
+
+		weight += map[round(zktX)/map.resolution][round(zktY)/map.resolution] ==0 ? 1 : 0;
 	}
+
 	return weight;
 }
 
-void Model::sampleNormalDistribution(double sigma){
+double Model::sampleNormalDistribution(double sigma){
 	// Box-Muller Transform
 	double x1, x2, w, r;
 	do{

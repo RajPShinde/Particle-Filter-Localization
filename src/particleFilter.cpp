@@ -27,6 +27,7 @@ void ParticleFilter::initializeParticles(){
 		// 	continue;
 		Particle p;
 		p.pose << x, y, yaw;
+		p.weight = 1/noOfParticles_;
 		particles_.push_back(p);
 	}
 	
@@ -92,7 +93,7 @@ void ParticleFilter::drawParticles(){
 		tf::Quaternion q;
 		q.setRPY(0, 0, p.pose(2));
 		q.normalize();
-		tf::quaternionTFToMsg(qNew, pose.orientation);
+		tf::quaternionTFToMsg(q, pose.orientation);
 
 		particlePoses_[i] = pose;
 		i++;
@@ -116,10 +117,11 @@ void ParticleFilter::localize(){
 		double roll, pitch, yaw;
 		tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
+		// Get x, y (position) from odometry
+		double x = odomData_.pose.pose.position.x;
+		double y = odomData_.pose.pose.position.y;
+
 		if(std::sqrt(std::pow(x-xPrev) + std::pow(y-yPrev))>0.01){
-			// position
-			double x = odomData_.pose.pose.position.x;
-			double y = odomData_.pose.pose.position.y;
 			
 			// Prepare control for motion model
 			std::vector<std::vector<double>> u = {{xPrev, yPrev, yawPrev}, {x, y, yaw}};
@@ -142,25 +144,37 @@ void ParticleFilter::localize(){
 
 			particles_ = tempParticles;
 
+			double totalWeight = 0;
 			for(Particle &p:particles_){
 				weight = model.measurementModel(p, scan_, map_);
 				p.weight = weight;
-				totalWeight_ += weight;
+				totalWeight += weight;
 			}
 
-			normalize();
-
-			drawParticles();
+			normalize(totalWeight);
 
 			resample();
+
+			drawParticles();
 		}
 	}
 }
 
 void ParticleFilter::resample(){
 
-	for(int i=0; i<noOfParticles_; i++){
+	std::vector<Particle> particlesTemp = particles_;
+	double r = (rand()/(double)RAND_MAX) * (1/noOfParticles_);
+	double c = particles_[0].weight;
+	int i = 0;
 
+	for(int p=0; p<noOfParticles_; p++){
+		double u = r + (double)p/noOfParticles_;
+		while(u>c && p<noOfParticles_){
+			i++;
+			c += particlesTemp[i].weight;
+		}
+		particles_[p] = particlesTemp[i];
+		particles_[p].weight = 1/noOfParticles_;
 	}
 
 }
