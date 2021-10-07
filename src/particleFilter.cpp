@@ -18,23 +18,22 @@ void ParticleFilter::initializeParticles(){
 	while(n!=noOfParticles_){
 		double x = (rand()/(double)RAND_MAX)*(map_.xWidth*map_.resolution) + map_.xMin*map_.resolution;
 		double y = (rand()/(double)RAND_MAX)*(map_.yWidth*map_.resolution) + map_.yMin*map_.resolution;
-		ROS_INFO_STREAM(x<<" "<<std::round(x)/map_.resolution);
-		// double x = (rand()/(double)RAND_MAX)*map_.xWidth + map_.xMin;
-		// double y = (rand()/(double)RAND_MAX)*map_.yWidth + map_.yMin;
 		double yaw = (rand()/(double)RAND_MAX)*(2*pi_);
 		fromPiToMinusPi(yaw);
 		if((int)(x/map_.resolution) == map_.xMax || (int)(y/map_.resolution) == map_.yMax)
 			continue;
 		if(map_.data[(int)(y/map_.resolution)][(int)(x/map_.resolution)]!=0)
 			continue;
-		// if(map_.data[x][y]<=0)
-		// 	continue;
 		Particle p;
 		p.pose << x, y, yaw;
+		p.pose << 13, 25, 0;
 		p.weight = 1/noOfParticles_;
 		particles_.push_back(p);
 		n++;
 	}
+
+	std::chrono::milliseconds timespan(2000);
+	std::this_thread::sleep_for(timespan);
 	
 	// Draw initial Particles
 	drawParticles();
@@ -47,13 +46,11 @@ ParticleFilter::~ParticleFilter(){
 }
 
 void ParticleFilter::odomCallback(const nav_msgs::Odometry msg){
-	ROS_INFO_STREAM("Odom");
 	odomData_ = msg;
 	odomReceived_ = true;
 }
 
 void ParticleFilter::scanCallback(const sensor_msgs::LaserScan msg){
-	ROS_INFO_STREAM("Scan");
 	scanData_ = msg;
 	scanReceived_ = true;
 	sensor_msgs::LaserScan temp = msg;
@@ -79,7 +76,6 @@ void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
 		}
 		map_.data.push_back(row);
 	}
-	ROS_INFO_STREAM("MAP");
 	initializeParticles();
 }
 
@@ -144,7 +140,6 @@ void ParticleFilter::localize(){
 	Model model_(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
 	if(initialized_ && odomReceived_ && scanReceived_){
 		ros::spinOnce();
-		ROS_INFO_STREAM("Localizing");
 		// To store last odom pose
 		static double xPrev, yPrev, yawPrev;
 		
@@ -159,8 +154,7 @@ void ParticleFilter::localize(){
 		double x = odomData_.pose.pose.position.x;
 		double y = odomData_.pose.pose.position.y;
 
-		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.005){
-			ROS_INFO_STREAM("Localizing In"); 
+		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.00){
 			
 			// Prepare control for motion model
 			std::vector<std::vector<double>> u = {{xPrev, yPrev, yawPrev}, {x, y, yaw}};

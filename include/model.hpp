@@ -40,7 +40,7 @@ class Model
         double alpha1_ = 0.01;
         double alpha2_ = 0.01;
         double alpha3_ = 0.01;
-        double alpha4_ = 0.04;
+        double alpha4_ = 0.01;
         double zHit_ = 0.8;
         double zShort_ = 0.2;
         double zRand_ = 0;
