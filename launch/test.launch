@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Localization Node -->
+  <node name="localization" pkg="particle_filter_localization" type="particleFilter" output="screen"/>
+
+  <!-- Map Server -->
+  <arg name="map" default="$(find particle_filter_localization)/map/map.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map)"/>
+
+  <!-- Transform -->
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_base_laser" args="0 0 0 0 0 0 /base_link /base_laser 100" />
+
+  <!-- Rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find particle_filter_localization)/config/display.rviz" />
+
+</launch>

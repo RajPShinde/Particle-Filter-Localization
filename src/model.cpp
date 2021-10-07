@@ -1,15 +1,15 @@
 #include <model.hpp>
 
-Model::Model(double alpha1_, double alpha2_, double alpha3_, double alpha4_,
-             double zHit_, double zShort_, double zRand_, double zMax_,
-             double sigmaHit_, double lambdaShort_){// : alpha1_(alpha1), alpha2_(alpha2), alpha3_(alpha3), alpha4_(alpha4){
+Model::Model(double alpha1, double alpha2, double alpha3, double alpha4,
+             double zHit, double zShort, double zRand, double zMax,
+             double sigmaHit, double lambdaShort){// : alpha1_(alpha1), alpha2_(alpha2), alpha3_(alpha3), alpha4_(alpha4){
 }
 
 Model::~Model(){
 }
 
 Eigen::Vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::Vector3d xPrev){
-
+	// ROS_INFO_STREAM("Odometry");
 	double deltaRot1, delatTrans, deltaRot2;
 	double deltaRot1Sd, delatTransSd, deltaRot2Sd;
 	double deltaRot1Hat, delatTransHat, deltaRot2Hat;
@@ -36,13 +36,13 @@ Eigen::Vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::Ve
 }
 
 double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map){
-
+	// ROS_INFO_STREAM("Measurement");
 	double weight = 0;
 	double sensorX = p.pose(0) + sensorOffsetX*cos(p.pose(2));
 	double sensorY = p.pose(1) + sensorOffsetY*sin(p.pose(2));
 	double sensorTheta = p.pose(2);
 
-	if(map.data[(int)round(p.pose(0))/map.resolution][(int)round(p.pose(1))/map.resolution]<=0 || map.data[round(sensorX)/map.resolution][round(sensorY)/map.resolution]<=0)
+	if(map.data[(int)(p.pose(1)/map.resolution)][(int)(p.pose(0)/map.resolution)]!=0 || map.data[(int)(sensorY/map.resolution)][(int)(sensorX/map.resolution)]!=0)
 		return 0;
 
 	for(int i = 0; i<720; i++){
@@ -55,11 +55,10 @@ double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData 
 
 		double zktX = sensorX + zkt*std::cos(zktStep);
 		double zktY = sensorY + zkt*std::sin(zktStep);
-
 		if(zktX<map.xMin*map.resolution || zktX>map.xMax*map.resolution || zktY<map.yMin*map.resolution || zktY>map.yMax*map.resolution)
 			continue;
-
-		weight += map.data[(int)round(zktX)/map.resolution][(int)round(zktY)/map.resolution] ==0 ? 1 : 0;
+		// ROS_INFO_STREAM(zktX<<" "<<zktY);
+		weight += map.data[(int)(zktY/map.resolution)][(int)(zktX/map.resolution)] ==0 ? 1 : 0;
 	}
 
 	return weight;

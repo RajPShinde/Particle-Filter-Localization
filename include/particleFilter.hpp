@@ -15,6 +15,8 @@
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/tf.h>
 
 class ParticleFilter
 {
@@ -38,6 +40,8 @@ class ParticleFilter
 
         void initializeParticles();
 
+        void publishPose();
+
         void resample();
 
         void localize();
@@ -48,6 +52,7 @@ class ParticleFilter
         ros::Subscriber scanSub_;
         ros::Subscriber mapSub_;
         ros::Publisher particlePub_;
+        ros::Publisher scanPub_;
         MapData map_;
         std::vector<Particle> particles_;
         double noOfParticles_;
@@ -55,6 +60,8 @@ class ParticleFilter
         sensor_msgs::LaserScan scanData_;
         geometry_msgs::PoseArray particlePoses_;
         bool initialized_ = false;
+        bool odomReceived_ = false;
+        bool scanReceived_ = false;
         double pi_ = 3.14159;
         double alpha1_ = 0.03;
         double alpha2_ = 0.03;

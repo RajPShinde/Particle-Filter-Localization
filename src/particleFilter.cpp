@@ -6,24 +6,26 @@ ParticleFilter::ParticleFilter(ros::NodeHandle &nh, int n): filter_(nh), noOfPar
 	scanSub_ = filter_.subscribe("/scan", 1, &ParticleFilter::scanCallback, this);
 	mapSub_ = filter_.subscribe("/map", 1, &ParticleFilter::mapCallback, this);
 	particlePub_ = filter_.advertise<geometry_msgs::PoseArray>("/particles", 1);
-	
-	// Create the motion and measurement models
-	// Model temp(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
-	// model_ = temp;
+	scanPub_ = filter_.advertise<sensor_msgs::LaserScan>("/scan2", 1);
 }
 
 void ParticleFilter::initializeParticles(){
 	// Create Particles
+	particlePoses_.header.frame_id = "map";
+	particlePoses_.header.stamp = ros::Time::now();
 	particlePoses_.poses.resize(noOfParticles_);
 	int n = 0;
 	while(n!=noOfParticles_){
 		double x = (rand()/(double)RAND_MAX)*(map_.xWidth*map_.resolution) + map_.xMin*map_.resolution;
 		double y = (rand()/(double)RAND_MAX)*(map_.yWidth*map_.resolution) + map_.yMin*map_.resolution;
+		ROS_INFO_STREAM(x<<" "<<std::round(x)/map_.resolution);
 		// double x = (rand()/(double)RAND_MAX)*map_.xWidth + map_.xMin;
 		// double y = (rand()/(double)RAND_MAX)*map_.yWidth + map_.yMin;
 		double yaw = (rand()/(double)RAND_MAX)*(2*pi_);
 		fromPiToMinusPi(yaw);
-		if(map_.data[std::round(x)/map_.resolution][std::round(y)/map_.resolution]<=0)
+		if((int)(x/map_.resolution) == map_.xMax || (int)(y/map_.resolution) == map_.yMax)
+			continue;
+		if(map_.data[(int)(y/map_.resolution)][(int)(x/map_.resolution)]!=0)
 			continue;
 		// if(map_.data[x][y]<=0)
 		// 	continue;
@@ -38,17 +40,25 @@ void ParticleFilter::initializeParticles(){
 	drawParticles();
 
 	initialized_ = true;
+
 }
 
 ParticleFilter::~ParticleFilter(){
 }
 
 void ParticleFilter::odomCallback(const nav_msgs::Odometry msg){
+	ROS_INFO_STREAM("Odom");
 	odomData_ = msg;
+	odomReceived_ = true;
 }
 
 void ParticleFilter::scanCallback(const sensor_msgs::LaserScan msg){
+	ROS_INFO_STREAM("Scan");
 	scanData_ = msg;
+	scanReceived_ = true;
+	sensor_msgs::LaserScan temp = msg;
+	temp.header.stamp = ros::Time::now();
+	scanPub_.publish(temp);
 }
 
 void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
@@ -59,15 +69,17 @@ void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
 	map_.yMin = 0;
 	map_.xMax = map_.xWidth;
 	map_.yMax = map_.yWidth;
+
 	int i = 0;
-	for(int y=0; y<map_.yMax; y++){
+	for(int x=0; x<map_.xMax; x++){
 		std::vector<int> row;
-		for(int x=0; x<map_.xMax; x++){
-			row.push_back(msg.data[i]);
+		for(int y=0; y<map_.yMax; y++){
+			row.push_back((int)msg.data[i]);
 			i++;
 		}
 		map_.data.push_back(row);
 	}
+	ROS_INFO_STREAM("MAP");
 	initializeParticles();
 }
 
@@ -104,14 +116,35 @@ void ParticleFilter::drawParticles(){
 	particlePub_.publish(particlePoses_);
 }
 
-void ParticleFilter::localize(){
-	while(!initialized_){
+void ParticleFilter::publishPose(){
+
+	double x, y, yaw;
+	for(Particle p:particles_){
+		x += p.pose(0);
+		y += p.pose(1);
+		yaw += p.pose(2);
 	}
+	x /= noOfParticles_;
+	y /= noOfParticles_;
+	yaw /= noOfParticles_;
+
+	tf::Quaternion q;
+	q.setRPY(0, 0, yaw);
+
+	static tf::TransformBroadcaster br;
+	tf::Transform t;
+	t.setOrigin(tf::Vector3(x, y, 0));
+	t.setRotation(q);
+	br.sendTransform(tf::StampedTransform(t, ros::Time::now(), "/map", "/base_link"));
+}
+
+void ParticleFilter::localize(){
+
 
 	Model model_(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
-
-	while(true){
-
+	if(initialized_ && odomReceived_ && scanReceived_){
+		ros::spinOnce();
+		ROS_INFO_STREAM("Localizing");
 		// To store last odom pose
 		static double xPrev, yPrev, yawPrev;
 		
@@ -126,7 +159,8 @@ void ParticleFilter::localize(){
 		double x = odomData_.pose.pose.position.x;
 		double y = odomData_.pose.pose.position.y;
 
-		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.01){
+		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.005){
+			ROS_INFO_STREAM("Localizing In"); 
 			
 			// Prepare control for motion model
 			std::vector<std::vector<double>> u = {{xPrev, yPrev, yawPrev}, {x, y, yaw}};
@@ -159,6 +193,8 @@ void ParticleFilter::localize(){
 			normalize(totalWeight);
 
 			resample();
+
+			publishPose();
 
 			drawParticles();
 		}
