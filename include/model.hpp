@@ -7,6 +7,7 @@
 #include <sensor_msgs/LaserScan.h>
 #include <particle.hpp>
 #include <mapData.hpp>
+#include <Eigen/Dense>
 #include <model.hpp>
 
 class Model
@@ -19,7 +20,7 @@ class Model
 
         ~Model();
 
-        Eigen::vector3d motionModel(double u, Eigen::vector3d xPrev);
+        Eigen::Vector3d motionModel(double u, Eigen::Vector3d xPrev);
 
         double measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map);
 
@@ -34,6 +35,7 @@ class Model
         double sensorRangeMax_ = 9;
         double sensorRangeMin_ = 0.699999988079;
         double sensorStep_ = 0.00873877573758;
+        double pi_ = 3.14159;
 
 
 };

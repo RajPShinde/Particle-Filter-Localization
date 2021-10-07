@@ -10,6 +10,8 @@
 #include <Eigen/Dense>
 #include <particle.hpp>
 #include <mapData.hpp>
+#include <model.hpp>
+#include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -34,6 +36,8 @@ class ParticleFilter
 
         void normalize(double totalWeight);
 
+        void initializeParticles();
+
         void resample();
 
         void localize();
@@ -45,8 +49,9 @@ class ParticleFilter
         ros::Subscriber mapSub_;
         ros::Publisher particlePub_;
         MapData map_;
+        Model model_;
         std::vector<Particle> particles_;
-        double numberOfParticles;
+        double noOfParticles_;
         nav_msgs::Odometry odomData_;
         sensor_msgs::LaserScan scanData_;
         geometry_msgs::PoseArray particlePoses_;

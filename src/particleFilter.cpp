@@ -8,7 +8,7 @@ ParticleFilter::ParticleFilter(ros::NodeHandle &nh, int n): filter_(nh), noOfPar
 	particlePub_ = filter_.advertise<geometry_msgs::PoseArray>("/particles", 1);
 	
 	// Create the motion and measurement models
-	Model model(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
+	model_ = Model temp(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
 }
 
 void ParticleFilter::initializeParticles(){
@@ -134,10 +134,10 @@ void ParticleFilter::localize(){
 			// Propogate particles using motion model
 			std::vector<Particle> tempParticles;
 			for(Particle p:particles_){
-				Eigen::vector3d xPrev, x;
+				Eigen::Vector3d xPrev, x;
 				Particle temp;
 				xPrev = p.pose;
-				x = model.motionModel(u, xPrev);
+				x = model_.motionModel(u, xPrev);
 				temp.pose = x;
 				tempParticles.push_back(temp);
 			}
@@ -146,7 +146,7 @@ void ParticleFilter::localize(){
 
 			double totalWeight = 0;
 			for(Particle &p:particles_){
-				weight = model.measurementModel(p, scan_, map_);
+				weight = model_.measurementModel(p, scanData_, map_);
 				p.weight = weight;
 				totalWeight += weight;
 			}

@@ -1,12 +1,14 @@
 #include <model.hpp>
 
-Model::Model(double alpha1, double alpha2, double alpha3, double alpha4) : alpha1_(alpha1), alpha2_(alpha2), alpha3_(alpha3), alpha4_(alpha4){
+Model::Model(double alpha1_, double alpha2_, double alpha3_, double alpha4_,
+             double zHit_, double zShort_, double zRand_, double zMax_,
+             double sigmaHit_, double lambdaShort_){// : alpha1_(alpha1), alpha2_(alpha2), alpha3_(alpha3), alpha4_(alpha4){
 }
 
 Model::~Model(){
 }
 
-Eigen::vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::vector3d xPrev){
+Eigen::Vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::Vector3d xPrev){
 
 	double deltaRot1, delatTrans, deltaRot2;
 	double deltaRot1Sd, delatTransSd, deltaRot2Sd;
@@ -35,28 +37,28 @@ Eigen::vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::ve
 double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map){
 
 	double weight = 0;
-	sensorX = p.pose(0) + sensorOffsetX*cos(pose(2));
-	sensorY = p.pose(1) + sensorOffsetY*sin(pose(2));
-	sensorTheta = pose(2);
+	double sensorX = p.pose(0) + sensorOffsetX*cos(p.pose(2));
+	double sensorY = p.pose(1) + sensorOffsetY*sin(p.pose(2));
+	double sensorTheta = p.pose(2);
 
-	if(map[round(p.pose(0))/map.resolution][round(p.pose(1))/map.resolution]<=0 || map[round(sensorX)/map.resolution][round(sensorY)/map.resolution]<=0)
+	if(map.data[(int)round(p.pose(0))/map.resolution][(int)round(p.pose(1))/map.resolution]<=0 || map[round(sensorX)/map.resolution][round(sensorY)/map.resolution]<=0)
 		return 0;
 
 	for(int i = 0; i<720; i++){
-		zkt = scan.ranges[i];
+		double zkt = scan.ranges[i];
 
-		if(zkt>sensorMaxRange_ || zkt<sensorRangeMin_)
-			continue
+		if(zkt>sensorRangeMax_ || zkt<sensorRangeMin_)
+			continue;
 
 		double zktStep = sensorTheta - pi_ + i*sensorStep_;
 
 		double zktX = sensorX + zkt*std::cos(zktStep);
 		double zktY = sensorY + zkt*std::sin(zktStep);
 
-		if(zktX<map.minX*map.resolution || zktX>map.maxX*map.resolution || zktY<map.minY*map.resolution || zktY>map.maxY*map.resolution)
+		if(zktX<map.xMin*map.resolution || zktX>map.xMax*map.resolution || zktY<map.yMin*map.resolution || zktY>map.yMax*map.resolution)
 			continue;
 
-		weight += map[round(zktX)/map.resolution][round(zktY)/map.resolution] ==0 ? 1 : 0;
+		weight += map.data[(int)round(zktX)/map.resolution][(int)round(zktY)/map.resolution] ==0 ? 1 : 0;
 	}
 
 	return weight;
@@ -71,14 +73,14 @@ double Model::sampleNormalDistribution(double sigma){
 		// Scale the Uniform distribution by 2 and left shift by 1 i.e Uniform Distribution [-1,1]
 		do{
 			// Generate a random number between [0,1]
-			r = rand48();
+			r = drand48();
 		}while(r==0);
 		// Project the number in distribution [-1, 1]
 		x1 = 2*r -1;
 		do{
 			// Generate a random number between [0,1]
-			r = rand48();
-		}while(r==0)
+			r = drand48();
+		}while(r==0);
 		// Project the number in distribution [-1, 1]
 		x2 = 2*r -1;
 		w = x1*x1 + x2*x2;

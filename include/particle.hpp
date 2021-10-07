@@ -1,10 +1,12 @@
 #ifndef INCLUDE_PARTICLE_HPP_
 #define INCLUDE_PARTICLE_HPP_
 
+#include <Eigen/Dense>
+
 class Particle
 {
     public:
-        Eigen::vector3d pose;
+        Eigen::Vector3d pose;
         double weight;
 };
 
