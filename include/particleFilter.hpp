@@ -18,7 +18,7 @@
 
 class ParticleFilter
 {
-    public:
+    public:       
 
         ParticleFilter(ros::NodeHandle &nh, int n);
 
@@ -32,7 +32,7 @@ class ParticleFilter
 
         void drawParticles();
 
-        void fromPiToMinusPi(double yaw);
+        void fromPiToMinusPi(double &angle);
 
         void normalize(double totalWeight);
 
@@ -49,7 +49,6 @@ class ParticleFilter
         ros::Subscriber mapSub_;
         ros::Publisher particlePub_;
         MapData map_;
-        Model model_;
         std::vector<Particle> particles_;
         double noOfParticles_;
         nav_msgs::Odometry odomData_;

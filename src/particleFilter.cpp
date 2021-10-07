@@ -8,12 +8,14 @@ ParticleFilter::ParticleFilter(ros::NodeHandle &nh, int n): filter_(nh), noOfPar
 	particlePub_ = filter_.advertise<geometry_msgs::PoseArray>("/particles", 1);
 	
 	// Create the motion and measurement models
-	model_ = Model temp(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
+	// Model temp(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
+	// model_ = temp;
 }
 
 void ParticleFilter::initializeParticles(){
 	// Create Particles
-	particlePoses_.resize(noOfParticles_);
+	particlePoses_.poses.resize(noOfParticles_);
+	int n = 0;
 	while(n!=noOfParticles_){
 		double x = (rand()/(double)RAND_MAX)*(map_.xWidth*map_.resolution) + map_.xMin*map_.resolution;
 		double y = (rand()/(double)RAND_MAX)*(map_.yWidth*map_.resolution) + map_.yMin*map_.resolution;
@@ -29,6 +31,7 @@ void ParticleFilter::initializeParticles(){
 		p.pose << x, y, yaw;
 		p.weight = 1/noOfParticles_;
 		particles_.push_back(p);
+		n++;
 	}
 	
 	// Draw initial Particles
@@ -49,18 +52,18 @@ void ParticleFilter::scanCallback(const sensor_msgs::LaserScan msg){
 }
 
 void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
-	map_.resolution = msg.info.resolution
+	map_.resolution = msg.info.resolution;
 	map_.xWidth = msg.info.width;
 	map_.yWidth = msg.info.height;
-	map_.xMin = 0
-	map_.yMin = 0
+	map_.xMin = 0;
+	map_.yMin = 0;
 	map_.xMax = map_.xWidth;
 	map_.yMax = map_.yWidth;
 	int i = 0;
 	for(int y=0; y<map_.yMax; y++){
 		std::vector<int> row;
 		for(int x=0; x<map_.xMax; x++){
-			row.push_back(msg.data[i])
+			row.push_back(msg.data[i]);
 			i++;
 		}
 		map_.data.push_back(row);
@@ -82,20 +85,20 @@ void ParticleFilter::normalize(double totalWeight){
 }
 
 void ParticleFilter::drawParticles(){
-	geometry_msgs::pose pose;
+	geometry_msgs::Pose pose;
 	int i = 0;
 
 	for(Particle p:particles_){
-		pose.x = p.pose(0);
-		pose.y = p.pose(1);
-		pose.z = 0;
+		pose.position.x = p.pose(0);
+		pose.position.y = p.pose(1);
+		pose.position.z = 0;
 
 		tf::Quaternion q;
 		q.setRPY(0, 0, p.pose(2));
 		q.normalize();
 		tf::quaternionTFToMsg(q, pose.orientation);
 
-		particlePoses_[i] = pose;
+		particlePoses_.poses[i] = pose;
 		i++;
 	}
 	particlePub_.publish(particlePoses_);
@@ -104,6 +107,8 @@ void ParticleFilter::drawParticles(){
 void ParticleFilter::localize(){
 	while(!initialized_){
 	}
+
+	Model model_(alpha1_, alpha2_, alpha3_, alpha4_, zHit_, zShort_, zRand_, zMax_, sigmaHit_, lambdaShort_);
 
 	while(true){
 
@@ -121,7 +126,7 @@ void ParticleFilter::localize(){
 		double x = odomData_.pose.pose.position.x;
 		double y = odomData_.pose.pose.position.y;
 
-		if(std::sqrt(std::pow(x-xPrev) + std::pow(y-yPrev))>0.01){
+		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.01){
 			
 			// Prepare control for motion model
 			std::vector<std::vector<double>> u = {{xPrev, yPrev, yawPrev}, {x, y, yaw}};
@@ -146,7 +151,7 @@ void ParticleFilter::localize(){
 
 			double totalWeight = 0;
 			for(Particle &p:particles_){
-				weight = model_.measurementModel(p, scanData_, map_);
+				double weight = model_.measurementModel(p, scanData_, map_);
 				p.weight = weight;
 				totalWeight += weight;
 			}

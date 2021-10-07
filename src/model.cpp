@@ -13,9 +13,10 @@ Eigen::Vector3d Model::motionModel(std::vector<std::vector<double>> u, Eigen::Ve
 	double deltaRot1, delatTrans, deltaRot2;
 	double deltaRot1Sd, delatTransSd, deltaRot2Sd;
 	double deltaRot1Hat, delatTransHat, deltaRot2Hat;
-	Eigen::vector3d x << xPrev(0), xPrev(1), xPrev(2);
+	Eigen::Vector3d x;
+	x  << xPrev(0), xPrev(1), xPrev(2);
 
-	deltaRot1 = std::atan2(u[1][1]-u[0][1]/u[1][0]-u[0][0]) - u[0][2];
+	deltaRot1 = std::atan2(u[1][1]-u[0][1],u[1][0]-u[0][0]) - u[0][2];
 	delatTrans = std::sqrt(std::pow(u[1][0]-u[0][0],2)+std::pow(u[1][1]-u[0][1],2));
 	deltaRot2 = u[1][2] - u[0][2] - deltaRot1;
 
@@ -41,7 +42,7 @@ double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData 
 	double sensorY = p.pose(1) + sensorOffsetY*sin(p.pose(2));
 	double sensorTheta = p.pose(2);
 
-	if(map.data[(int)round(p.pose(0))/map.resolution][(int)round(p.pose(1))/map.resolution]<=0 || map[round(sensorX)/map.resolution][round(sensorY)/map.resolution]<=0)
+	if(map.data[(int)round(p.pose(0))/map.resolution][(int)round(p.pose(1))/map.resolution]<=0 || map.data[round(sensorX)/map.resolution][round(sensorY)/map.resolution]<=0)
 		return 0;
 
 	for(int i = 0; i<720; i++){

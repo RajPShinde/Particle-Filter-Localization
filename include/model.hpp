@@ -20,7 +20,7 @@ class Model
 
         ~Model();
 
-        Eigen::Vector3d motionModel(double u, Eigen::Vector3d xPrev);
+        Eigen::Vector3d motionModel(std::vector<std::vector<double>> u, Eigen::Vector3d xPrev);
 
         double measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map);
 
