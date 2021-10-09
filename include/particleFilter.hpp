@@ -34,8 +34,6 @@ class ParticleFilter
 
         void mapCallback(const nav_msgs::OccupancyGrid msg);
 
-        void drawParticles();
-
         void fromPiToMinusPi(double &angle);
 
         void normalize(double totalWeight);
@@ -71,7 +69,7 @@ class ParticleFilter
         double alpha2_ = 0.03;
         double alpha3_ = 0.4;
         double alpha4_ = 0.4;
-        double zHit_ = 0.8;
+        double zHit_ = 0.95;
         double zShort_ = 0.2;
         double zRand_ = 0;
         double zMax_ = 0;

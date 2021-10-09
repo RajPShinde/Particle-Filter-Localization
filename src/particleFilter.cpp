@@ -36,7 +36,7 @@ void ParticleFilter::initializeParticles(){
 	std::this_thread::sleep_for(timespan);
 	
 	// Draw initial Particles
-	drawParticles();
+	publishPose();
 
 	initialized_ = true;
 
@@ -94,7 +94,6 @@ void ParticleFilter::distances(){
 			if(distances_[free_[i].second][free_[i].first] > distance){
 				distances_[free_[i].second][free_[i].first] = distance;
 			}
-			// ROS_INFO_STREAM(distances_[free_[i].second][free_[i].first]);
 		}
 	}
 
@@ -114,11 +113,16 @@ void ParticleFilter::normalize(double totalWeight){
 	}
 }
 
-void ParticleFilter::drawParticles(){
+void ParticleFilter::publishPose(){
 	geometry_msgs::Pose pose;
 	int i = 0;
-
+	double x, y, yaw;
 	for(Particle p:particles_){
+
+		x += p.pose(0);
+		y += p.pose(1);
+		yaw += p.pose(2);
+
 		pose.position.x = p.pose(0);
 		pose.position.y = p.pose(1);
 		pose.position.z = 0;
@@ -132,16 +136,7 @@ void ParticleFilter::drawParticles(){
 		i++;
 	}
 	particlePub_.publish(particlePoses_);
-}
 
-void ParticleFilter::publishPose(){
-
-	double x, y, yaw;
-	for(Particle p:particles_){
-		x += p.pose(0);
-		y += p.pose(1);
-		yaw += p.pose(2);
-	}
 	x /= noOfParticles_;
 	y /= noOfParticles_;
 	yaw /= noOfParticles_;
@@ -176,7 +171,7 @@ void ParticleFilter::localize(){
 		double x = odomData_.pose.pose.position.x;
 		double y = odomData_.pose.pose.position.y;
 
-		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.03){
+		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.01){
 			
 			// Prepare control for motion model
 			std::vector<std::vector<double>> u = {{xPrev, yPrev, yawPrev}, {x, y, yaw}};
@@ -212,8 +207,6 @@ void ParticleFilter::localize(){
 			resample();
 
 			publishPose();
-
-			drawParticles();
 		}
 	}
 }
