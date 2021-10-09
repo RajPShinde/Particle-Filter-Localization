@@ -3,8 +3,8 @@
 int main(int argc, char **argv){
     ros::init(argc, argv, "particleFilter");
     ros::NodeHandle nh;
-    ParticleFilter localize(nh, 2000);
-    ros::Rate loop(20);
+    ParticleFilter localize(nh, 1000);
+    ros::Rate loop(100);
     while(ros::ok()){
         ros::spinOnce();
         localize.localize();

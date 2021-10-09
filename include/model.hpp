@@ -41,15 +41,15 @@ class Model
         double sensorRangeMin_ = 0.699999988079;
         double sensorStep_ = 0.00873877573758;
         double pi_ = 3.14159;
-        double alpha1_ = 0.01;
-        double alpha2_ = 0.01;
-        double alpha3_ = 0.01;
-        double alpha4_ = 0.01;
+        double alpha1_ = 0.04;
+        double alpha2_ = 0.04;
+        double alpha3_ = 0.04;
+        double alpha4_ = 0.04;
         double zHit_ = 0.8;
         double zShort_ = 0.2;
         double zRand_ = 0;
         double zMax_ = 0;
-        double sigmaHit_ = 2;
+        double sigmaHit_ = 0.7;
         double lambdaShort_ = 1.5;
 
 

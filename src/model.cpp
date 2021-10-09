@@ -85,10 +85,10 @@ double Model::measurementModelLikelihoodField(Particle p, sensor_msgs::LaserScan
 		if(zktX<map.xMin*map.resolution || zktX>map.xMax*map.resolution || zktY<map.yMin*map.resolution || zktY>map.yMax*map.resolution)
 			continue;
 
-		double distanceSquared = distances_[(int)(zktY/map.resolution)][(int)(zktX/map.resolution)];
-		ROS_INFO_STREAM(distanceSquared);
-		weight *= zHit_*gaussianDistribution(0, sigmaHit_, distanceSquared);
-
+		double distanceSquared = distances_[(int)(zktX/map.resolution)][(int)(zktY/map.resolution)];
+		// ROS_INFO_STREAM(distanceSquared);
+		weight += zHit_*gaussianDistribution(0, sigmaHit_, distanceSquared);
+		// ROS_INFO_STREAM(gaussianDistribution(0, sigmaHit_, 0));
 	}
 	// ROS_INFO_STREAM(weight);
 	return weight;
@@ -120,6 +120,6 @@ double Model::sampleNormalDistribution(double sigma){
 }
 
 double Model::gaussianDistribution(double mean, double standardDeviation, double x){
-	double probabilityX = (1 / (std::sqrt(2*pi_)*standardDeviation)) * std::exp(-0.5 * (x-mean) * (x-mean) / (standardDeviation*standardDeviation));
+	double probabilityX = (1 / (std::sqrt(2*pi_)*standardDeviation)) * std::exp(-1*(x-mean)*(x-mean) / (2*standardDeviation*standardDeviation));
 	return probabilityX;
 }

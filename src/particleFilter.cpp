@@ -94,11 +94,11 @@ void ParticleFilter::distances(){
 			if(distances_[free_[i].second][free_[i].first] > distance){
 				distances_[free_[i].second][free_[i].first] = distance;
 			}
-			ROS_INFO_STREAM(distances_[free_[i].second][free_[i].first]);
+			// ROS_INFO_STREAM(distances_[free_[i].second][free_[i].first]);
 		}
 	}
 
-	// ROS_INFO_STREAM(distances_[13][25]);
+	ROS_INFO_STREAM(distances_[24][12]);
 }
 
 void ParticleFilter::fromPiToMinusPi(double &angle){
@@ -176,7 +176,7 @@ void ParticleFilter::localize(){
 		double x = odomData_.pose.pose.position.x;
 		double y = odomData_.pose.pose.position.y;
 
-		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.00){
+		if(std::sqrt(std::pow(x-xPrev, 2) + std::pow(y-yPrev, 2))>0.03){
 			
 			// Prepare control for motion model
 			std::vector<std::vector<double>> u = {{xPrev, yPrev, yawPrev}, {x, y, yaw}};
@@ -232,7 +232,7 @@ void ParticleFilter::resample(){
 			c += particlesTemp[i].weight;
 		}
 		particles_[p] = particlesTemp[i];
-		particles_[p].weight = 1/noOfParticles_;
+		// particles_[p].weight = 1/noOfParticles_;
 	}
 
 }
