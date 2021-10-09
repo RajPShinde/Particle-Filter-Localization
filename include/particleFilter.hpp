@@ -40,6 +40,8 @@ class ParticleFilter
 
         void normalize(double totalWeight);
 
+        void distances();
+
         void initializeParticles();
 
         void publishPose();
@@ -75,6 +77,9 @@ class ParticleFilter
         double zMax_ = 0;
         double sigmaHit_ = 2;
         double lambdaShort_ = 1.5;
+        std::vector<std::pair<int,int>> occupied_;
+        std::vector<std::pair<int,int>> free_;
+        std::vector<std::vector<double>> distances_;
 };
 
 #endif  //  INCLUDE_PARTICLEFILTER_HPP_

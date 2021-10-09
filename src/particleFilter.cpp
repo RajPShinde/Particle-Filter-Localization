@@ -26,7 +26,7 @@ void ParticleFilter::initializeParticles(){
 			continue;
 		Particle p;
 		p.pose << x, y, yaw;
-		p.pose << 13, 25, 0;
+		// p.pose << 13, 25, 0;
 		p.weight = 1/noOfParticles_;
 		particles_.push_back(p);
 		n++;
@@ -68,15 +68,37 @@ void ParticleFilter::mapCallback(const nav_msgs::OccupancyGrid msg){
 	map_.yMax = map_.yWidth;
 
 	int i = 0;
-	for(int x=0; x<map_.xMax; x++){
+	for(int y=0; y<map_.yMax; y++){
 		std::vector<int> row;
-		for(int y=0; y<map_.yMax; y++){
+		for(int x=0; x<map_.xMax; x++){
 			row.push_back((int)msg.data[i]);
+			if((int)msg.data[i]==100)
+				occupied_.push_back(std::make_pair(y,x));
+			else if((int)msg.data[i]==0)
+				free_.push_back(std::make_pair(y,x));
 			i++;
 		}
 		map_.data.push_back(row);
 	}
+	distances();
 	initializeParticles();
+}
+
+void ParticleFilter::distances(){
+	std::vector<std::vector<double>> temp(map_.yMax, std::vector<double>(map_.xMax, INT_MAX));
+	distances_ = temp;
+
+	for(int i=0; i<free_.size(); i++){
+		for(int j=0; j<occupied_.size(); j++){
+			double distance = std::pow(free_[i].first-occupied_[j].first,2) + std::pow(free_[i].second-occupied_[j].second,2);
+			if(distances_[free_[i].second][free_[i].first] > distance){
+				distances_[free_[i].second][free_[i].first] = distance;
+			}
+			ROS_INFO_STREAM(distances_[free_[i].second][free_[i].first]);
+		}
+	}
+
+	// ROS_INFO_STREAM(distances_[13][25]);
 }
 
 void ParticleFilter::fromPiToMinusPi(double &angle){
@@ -179,7 +201,8 @@ void ParticleFilter::localize(){
 
 			double totalWeight = 0;
 			for(Particle &p:particles_){
-				double weight = model_.measurementModel(p, scanData_, map_);
+				// double weight = model_.measurementModel(p, scanData_, map_);
+				double weight = model_.measurementModelLikelihoodField(p, scanData_,map_, distances_);
 				p.weight = weight;
 				totalWeight += weight;
 			}

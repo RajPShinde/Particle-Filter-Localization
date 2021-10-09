@@ -61,6 +61,39 @@ double Model::measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData 
 	return weight;
 }
 
+double Model::measurementModelLikelihoodField(Particle p, sensor_msgs::LaserScan scan, MapData map, std::vector<std::vector<double>> distances_){
+	double weight = 1;
+	double sensorX = p.pose(0) + sensorOffsetX*cos(p.pose(2));
+	double sensorY = p.pose(1) + sensorOffsetY*sin(p.pose(2));
+	double sensorTheta = p.pose(2);
+
+	if(map.data[(int)(p.pose(1)/map.resolution)][(int)(p.pose(0)/map.resolution)]!=0 || map.data[(int)(sensorY/map.resolution)][(int)(sensorX/map.resolution)]!=0)
+		return 0;
+
+	for(int i = 0; i<720; i++){
+		// ROS_INFO_STREAM("SCAN");
+		double zkt = scan.ranges[i];
+
+		if(zkt>sensorRangeMax_ || zkt<sensorRangeMin_)
+			continue;
+
+		double zktStep = sensorTheta - pi_ + i*sensorStep_;
+
+		double zktX = sensorX + zkt*std::cos(zktStep);
+		double zktY = sensorY + zkt*std::sin(zktStep);
+
+		if(zktX<map.xMin*map.resolution || zktX>map.xMax*map.resolution || zktY<map.yMin*map.resolution || zktY>map.yMax*map.resolution)
+			continue;
+
+		double distanceSquared = distances_[(int)(zktY/map.resolution)][(int)(zktX/map.resolution)];
+		ROS_INFO_STREAM(distanceSquared);
+		weight *= zHit_*gaussianDistribution(0, sigmaHit_, distanceSquared);
+
+	}
+	// ROS_INFO_STREAM(weight);
+	return weight;
+}
+
 double Model::sampleNormalDistribution(double sigma){
 	// Box-Muller Transform
 	double x1, x2, w, r;
@@ -84,4 +117,9 @@ double Model::sampleNormalDistribution(double sigma){
 	}while(w>1 || w==0);
 
 	return sigma * x2 * std::sqrt(-2.0*std::log(w)/w);
+}
+
+double Model::gaussianDistribution(double mean, double standardDeviation, double x){
+	double probabilityX = (1 / (std::sqrt(2*pi_)*standardDeviation)) * std::exp(-0.5 * (x-mean) * (x-mean) / (standardDeviation*standardDeviation));
+	return probabilityX;
 }

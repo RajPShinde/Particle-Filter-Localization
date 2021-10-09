@@ -25,7 +25,11 @@ class Model
 
         double measurementModel(Particle p, sensor_msgs::LaserScan scan, MapData map);
 
+        double measurementModelLikelihoodField(Particle p, sensor_msgs::LaserScan, MapData map, std::vector<std::vector<double>> distances_);
+
         double sampleNormalDistribution(double sigma);
+
+        double gaussianDistribution(double mean, double standardDeviation, double x);
 
     private:
         // double alpha1_, alpha2_, alpha3_, alpha4_;
